@@ -7,10 +7,13 @@
 static const uint8_t SENSOR_COUNT = 8;
 
 static uint8_t sensorByte = 0xFF;
-static uint8_t rec_data[SENSOR_COUNT]; // 0=black area, 1=white line ← 改注释
+static uint8_t rec_data[SENSOR_COUNT]; // 0=black area, 1=white line
 
 static int8_t lastLineError = 0;  // -7..+7
 static bool lostLine = true;
+
+// I2C failure counter (for Serial diagnostics)
+static uint8_t i2cFailCount = 0;
 
 // PID state
 static float iTerm = 0.0f;
@@ -47,6 +50,7 @@ void Trackline_Init(void) {
   Wire.setSDA(LINE_I2C_SDA_PIN);
   Wire.begin();
 
+  i2cFailCount = 0;
   lastPidMs = millis();
   lastIntersectionMs = 0;
   SetSensorStateLost();
@@ -55,31 +59,37 @@ void Trackline_Init(void) {
 void Sensor_Receive(void) {
   if (!WireReadDataByte(LINE_REG_DATA, sensorByte)) {
     SetSensorStateLost();
+    ++i2cFailCount;
+    if (i2cFailCount == 1 || i2cFailCount % 50 == 0) {
+      Serial.print(F("[WARN] I2C read fail #"));
+      Serial.println(i2cFailCount);
+    }
     return;
   }
 
+  i2cFailCount = 0;
   for (uint8_t i = 0; i < SENSOR_COUNT; ++i) {
     rec_data[i] = (sensorByte >> i) & 0x01;
   }
   lostLine = false;
 }
 
-// ← 【修改1】计数白线（== 1）
+// Counts sensors that see white line (rec_data == 1)
 static uint8_t GetLineHitCount() {
   uint8_t hit = 0;
   for (uint8_t i = 0; i < SENSOR_COUNT; ++i) {
-    if (rec_data[i] == 1) ++hit;  // ← 改这里
+    if (rec_data[i] == 1) ++hit;
   }
   return hit;
 }
 
-// ← 【修改2】计算白线偏差
+// Computes weighted error from white-line sensors; returns last error when no sensors hit
 static int8_t ComputeLineError() {
   int16_t weightedSum = 0;
   uint8_t hit = 0;
 
   for (uint8_t i = 0; i < SENSOR_COUNT; ++i) {
-    if (rec_data[i] == 1) {  // ← 改这里
+    if (rec_data[i] == 1) {
       weightedSum += SENSOR_WEIGHTS[i];
       ++hit;
     }
@@ -89,12 +99,12 @@ static int8_t ComputeLineError() {
   return (int8_t)(weightedSum / (int16_t)hit);
 }
 
-// ← 【修改3】检测十字路口 - 寻找白线特征
+// Intersection: both edge sensors (0,7) and wide center (2..5) see white line
 static bool IsIntersectionDetected() {
   uint8_t hit = GetLineHitCount();
-  bool edges = (rec_data[0] == 1 && rec_data[7] == 1);        // ← 改这里
-  bool wideCenter = (rec_data[2] == 1 && rec_data[3] == 1 &&  // ← 改这里
-                     rec_data[4] == 1 && rec_data[5] == 1);   // ← 改这里
+  bool edges = (rec_data[0] == 1 && rec_data[7] == 1);
+  bool wideCenter = (rec_data[2] == 1 && rec_data[3] == 1 &&
+                     rec_data[4] == 1 && rec_data[5] == 1);
   return edges && wideCenter && (hit >= INTERSECTION_MIN_HIT);
 }
 
@@ -160,15 +170,25 @@ static void BrakeAtIntersection() {
   lastIntersectionMs = millis();
 }
 
-void Forward(uint8_t n) {
+void Forward(uint16_t n) {
   if (n == 0) {
     Stop();
     return;
   }
 
-  uint8_t passed = 0;
+  uint16_t passed = 0;
+  uint32_t startMs = millis();
 
   while (passed < n) {
+    if (millis() - startMs > FORWARD_TIMEOUT_MS) {
+      Stop();
+      Serial.print(F("[ERR] Forward timeout: passed="));
+      Serial.print(passed);
+      Serial.print(F("/"));
+      Serial.println(n);
+      break;
+    }
+
     Tracking_Line_Task();
 
     if (IsIntersectionDetected()) {

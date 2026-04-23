@@ -50,12 +50,13 @@ static void WaitForStartSignal() {
 
 static void ExecuteStep(const RouteStep &step) {
   switch (step.action) {
-    case ACTION_FORWARD:      Forward((uint8_t)step.value); break;
+    case ACTION_FORWARD:      Forward(step.value); break;
     case ACTION_LEFT_TURN:    LeftTurn(); break;
     case ACTION_RIGHT_TURN:   RightTurn(); break;
     case ACTION_BACK_TURN:    BackTurn(); break;
     case ACTION_PUSH_BLOCKS:  PushBlocks(); break;
     case ACTION_WAIT:         delay(step.value); break;
+    default: break;
   }
 }
 

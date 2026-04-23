@@ -7,6 +7,8 @@
 static const uint32_t KEY_PIN = PA1;
 
 // I2C line follower
+// Note: 0x78 is the 7-bit address used by Arduino Wire. Verify with your
+// sensor datasheet; some docs list an 8-bit write address (e.g. 0xF0 → 7-bit 0x78).
 static const uint8_t LINE_FOLLOWER_I2C_ADDR = 0x78;
 static const uint32_t LINE_I2C_SCL_PIN = PB6;
 static const uint32_t LINE_I2C_SDA_PIN = PB7;
@@ -57,13 +59,16 @@ static const uint16_t PID_DT_MAX_MS = 50;
 static const uint16_t LOST_LINE_STRAFE_MS = 80;
 
 // Intersection detection
-static const uint8_t INTERSECTION_MIN_HIT = 6;      // how many sensors see black(0)
+static const uint8_t INTERSECTION_MIN_HIT = 6;      // how many sensors see white line (1)
 static const uint16_t INTERSECTION_BRAKE_MS = 233;
 static const uint16_t INTERSECTION_DEBOUNCE_MS = 800;
 
 // Start / debounce
 static const uint16_t POWER_ON_SETTLE_MS = 1000;
 static const uint16_t START_BUTTON_DEBOUNCE_MS = 20;
+
+// Forward() per-call watchdog: abort if no intersection found within this time
+static const uint32_t FORWARD_TIMEOUT_MS = 30000;
 
 // Sensor weights (8 sensors, left->right)
 static const int8_t SENSOR_WEIGHTS[8] = {-7, -5, -3, -1, 1, 3, 5, 7};

@@ -8,14 +8,16 @@ Wiring used by code
 Start button
 PA1 (KEY_PIN), INPUT_PULLUP
 Line follower (I2C)
-Addr: 0x78
+Addr: 0x78 (7-bit Arduino Wire address)
 SCL -> PB6
 SDA -> PB7
 Read reg 1, 1 byte
-Bit i: 0 = black line hit， 1 = white
+Bit i: 0 = black area (no line), 1 = white line detected
 Motors (PWM + DIR)
-PWM: PE9, PE11, PA0, PA2
-DIR: PE2, PE3, PA4, PA5
+Motor 0 (front-left):  PWM -> PD14,  DIR -> PD9
+Motor 1 (front-right): PWM -> PA15,  DIR -> PD10
+Motor 2 (rear-left):   PWM -> PB0,   DIR -> PB1
+Motor 3 (rear-right):  PWM -> PA2,   DIR -> PA5
 First bring-up checklist (important)
 Lift the car and verify motor directions:
 If forward command spins wheels backward or twists: change MOTOR_DIR_DEFAULT[4] in config.h。
@@ -35,8 +37,8 @@ Usually keep KI = 0 first; only add small KI if there's steady bias.
 Intersection detection
 An intersection is detected when:
 
-both edges (sensor 0 and 7) are black
-wide center (2..5) are black
+both edges (sensor 0 and 7) see white line (bit=1)
+wide center (2..5) see white line (bit=1)
 hit count >= INTERSECTION_MIN_HIT Plus debounce INTERSECTION_DEBOUNCE_MS。
 If false triggers happen on thick lines:
 
