@@ -7,7 +7,7 @@
 static const uint8_t SENSOR_COUNT = 8;
 
 static uint8_t sensorByte = 0xFF;
-static uint8_t rec_data[SENSOR_COUNT]; // 0=black hit, 1=white
+static uint8_t rec_data[SENSOR_COUNT]; // 0=black area, 1=white line ← 改注释
 
 static int8_t lastLineError = 0;  // -7..+7
 static bool lostLine = true;
@@ -38,7 +38,7 @@ static bool WireReadDataByte(uint8_t reg, uint8_t &val) {
 }
 
 static void SetSensorStateLost() {
-  for (uint8_t i = 0; i < SENSOR_COUNT; ++i) rec_data[i] = 1;
+  for (uint8_t i = 0; i < SENSOR_COUNT; ++i) rec_data[i] = 0;  // ← 改成 0（没有白线）
   lostLine = true;
 }
 
@@ -64,20 +64,22 @@ void Sensor_Receive(void) {
   lostLine = false;
 }
 
+// ← 【修改1】计数白线（== 1）
 static uint8_t GetLineHitCount() {
   uint8_t hit = 0;
   for (uint8_t i = 0; i < SENSOR_COUNT; ++i) {
-    if (rec_data[i] == 0) ++hit;
+    if (rec_data[i] == 1) ++hit;  // ← 改这里
   }
   return hit;
 }
 
+// ← 【修改2】计算白线偏差
 static int8_t ComputeLineError() {
   int16_t weightedSum = 0;
   uint8_t hit = 0;
 
   for (uint8_t i = 0; i < SENSOR_COUNT; ++i) {
-    if (rec_data[i] == 0) {
+    if (rec_data[i] == 1) {  // ← 改这里
       weightedSum += SENSOR_WEIGHTS[i];
       ++hit;
     }
@@ -87,10 +89,12 @@ static int8_t ComputeLineError() {
   return (int8_t)(weightedSum / (int16_t)hit);
 }
 
+// ← 【修改3】检测十字路口 - 寻找白线特征
 static bool IsIntersectionDetected() {
   uint8_t hit = GetLineHitCount();
-  bool edges = (rec_data[0] == 0 && rec_data[7] == 0);
-  bool wideCenter = (rec_data[2] == 0 && rec_data[3] == 0 && rec_data[4] == 0 && rec_data[5] == 0);
+  bool edges = (rec_data[0] == 1 && rec_data[7] == 1);        // ← 改这里
+  bool wideCenter = (rec_data[2] == 1 && rec_data[3] == 1 &&  // ← 改这里
+                     rec_data[4] == 1 && rec_data[5] == 1);   // ← 改这里
   return edges && wideCenter && (hit >= INTERSECTION_MIN_HIT);
 }
 
