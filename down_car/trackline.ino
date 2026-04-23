@@ -12,7 +12,8 @@ static uint8_t rec_data[SENSOR_COUNT]; // 0=black area, 1=white line
 static int8_t lastLineError = 0;  // -7..+7
 static bool lostLine = true;
 
-// I2C failure counter (for Serial diagnostics)
+// I2C failure counter (for Serial diagnostics).
+// Modified only from the main loop; no interrupt calls Sensor_Receive(), so no sync needed.
 static uint8_t i2cFailCount = 0;
 
 // PID state
