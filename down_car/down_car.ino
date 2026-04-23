@@ -17,26 +17,23 @@ struct RouteStep {
 
 // Keep your existing route
 static const RouteStep selectionRoute[] = {
-  {ACTION_LEFT_TURN, 0},
-  {ACTION_FORWARD, 1},
-  {ACTION_WAIT, 200},
-
-  {ACTION_LEFT_TURN, 0},
-  {ACTION_FORWARD, 1},
-  {ACTION_WAIT, 200},
-
-  {ACTION_RIGHT_TURN, 0},
-  {ACTION_FORWARD, 1},
-  {ACTION_WAIT, 200},
-
-  {ACTION_BACK_TURN, 0},
-  {ACTION_FORWARD, 1},
-  {ACTION_WAIT, 200},
-
-  {ACTION_LEFT_TURN, 0},
   {ACTION_FORWARD, 2},
+  {ACTION_WAIT, 100},
+
   {ACTION_RIGHT_TURN, 0},
+  {ACTION_WAIT, 100}
+
+  {ACTION_FORWARD, 2},
+  {ACTION_WAIT, 100},
+
+  {ACTION_LEFT_TURN, 0},
+  {ACTION_WAIT, 100},
+
   {ACTION_FORWARD, 1},
+  {ACTION_WAIT, 100},
+
+  {ACTION_RIGHT_TURN, 0},
+  {ACTION_WAIT, 100},
 
   {ACTION_PUSH_BLOCKS, 0}
 };
