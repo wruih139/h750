@@ -14,4 +14,3 @@ void mqx_Forward(uint8_t v);
 void mqx_Backward(uint8_t v);
 void Stop();
 void PushBlocks();
-void Forward(uint8_t n);

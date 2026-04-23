@@ -21,7 +21,7 @@ static const RouteStep selectionRoute[] = {
   {ACTION_WAIT, 100},
 
   {ACTION_RIGHT_TURN, 0},
-  {ACTION_WAIT, 100}
+  {ACTION_WAIT, 100},
 
   {ACTION_FORWARD, 2},
   {ACTION_WAIT, 100},
